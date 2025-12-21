@@ -1,0 +1,29 @@
+# Ignore root directory files
+../bun.lockb
+../node_modules
+../.git
+../src
+../public
+../docs
+../n8n-workflows
+
+# Ignore development files
+.env.local
+.env.development
+*.log
+logs/
+node_modules/
+.DS_Store
+.vscode/
+.idea/
+
+# Ignore test files
+test/
+tests/
+*.test.js
+*.spec.js
+
+# Ignore documentation
+README.md
+docs/
+*.md

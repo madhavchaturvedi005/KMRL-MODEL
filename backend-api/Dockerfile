@@ -19,11 +19,13 @@ RUN apk add --no-cache \
     libjpeg-turbo-dev \
     freetype-dev
 
-# Copy package files
-COPY package*.json ./
+# Copy package files first for better caching
+COPY package.json ./
+COPY package-lock.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Clear npm cache and install dependencies
+RUN npm cache clean --force
+RUN npm ci --only=production --no-audit --no-fund
 
 # Copy source code
 COPY src/ ./src/
