@@ -1,0 +1,31 @@
+services:
+  - type: web
+    name: kmrl-backend-api
+    env: node
+    plan: starter
+    buildCommand: npm ci --only=production
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: GOOGLE_AI_API_KEY
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: FRONTEND_URL
+        sync: false
+      - key: MAX_FILE_SIZE
+        value: 52428800
+      - key: SUPPORTED_FORMATS
+        value: pdf,doc,docx,txt,csv,xlsx
+      - key: LOG_LEVEL
+        value: info

@@ -250,11 +250,11 @@ JWT_SECRET=your-jwt-secret
 
 ### Production Deployment
 1. **Frontend**: Deploy to Vercel
-2. **Backend**: Deploy to Railway
+2. **Backend**: Deploy to Render (recommended) or Railway
 3. **Database**: Supabase (managed)
 4. **AI**: Google AI Studio
 
-See [**Deployment Guide**](DEPLOYMENT-GUIDE.md) for detailed instructions.
+See [**Deployment Guide**](docs/guides/DEPLOYMENT-GUIDE.md) for detailed instructions.
 
 ### Docker Deployment
 ```bash
@@ -279,7 +279,7 @@ docker run -p 3000:3000 kmrl-frontend
 
 ### Scaling Considerations
 - **Database**: Supabase auto-scaling
-- **Backend**: Railway horizontal scaling
+- **Backend**: Render/Railway horizontal scaling
 - **AI**: Google AI quota management
 - **Storage**: CDN for file delivery
 
