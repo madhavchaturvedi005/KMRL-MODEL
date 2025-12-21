@@ -23,8 +23,9 @@ import { MinimalDocumentCard } from "./MinimalDocumentCard";
 import { CompactDocumentCard } from "./CompactDocumentCard";
 import { geminiService } from "@/services/geminiService";
 import { mockGeminiService } from "@/services/mockGeminiService";
-import { documentStorage, StoredDocument } from "@/services/documentStorage";
+import { EnhancedDocumentService, EnhancedDocument } from "@/services/enhancedDocumentService";
 import { projectStorage, Project } from "@/services/projectStorage";
+import { DocumentTestPanel } from "./DocumentTestPanel";
 import { CreateProjectDialog } from "./CreateProjectDialog";
 
 
@@ -92,39 +93,35 @@ const DocumentUpload = () => {
     setIsUploading(true);
     
     try {
-      const processedDocuments = [];
-      
-      for (const file of selectedFiles) {
+      const uploadPromises = selectedFiles.map(async (file) => {
         try {
-          // Extract text content from file
-          const fileContent = await geminiService.extractTextFromFile(file);
-          
-          // Try to analyze document with AI, fallback to mock service if needed
-          let analysis;
-          try {
-            analysis = await geminiService.analyzeDocument(fileContent, file.name);
-          } catch (error) {
-            console.warn('Gemini AI failed, using mock service:', error);
-            analysis = await mockGeminiService.analyzeDocument(fileContent, file.name);
+          // For mock user, don't pass user_id to avoid RLS issues
+          const userId = user?.id === 'mock-admin-id' ? undefined : user?.id;
+          const result = await EnhancedDocumentService.uploadDocument(file, userId);
+          if (!result.success) {
+            throw new Error(result.error || 'Upload failed');
           }
-          
-          // Save to local storage
-          const savedDocument = documentStorage.saveDocument(analysis, fileContent, file);
-          processedDocuments.push(savedDocument);
+          return result.document;
         } catch (error) {
-          console.error('Error processing file:', file.name, error);
+          console.error('Error uploading file:', file.name, error);
           toast({
-            title: "File Processing Error",
-            description: `Failed to process ${file.name}. Please try again.`,
+            title: "File Upload Error",
+            description: `Failed to upload ${file.name}. Please try again.`,
             variant: "destructive",
           });
+          return null;
         }
-      }
-      
-      toast({
-        title: "Upload and Analysis Complete",
-        description: `${selectedFiles.length} file(s) have been processed and analyzed by AI.`,
       });
+
+      const uploadedDocuments = await Promise.all(uploadPromises);
+      const successfulUploads = uploadedDocuments.filter(doc => doc !== null);
+      
+      if (successfulUploads.length > 0) {
+        toast({
+          title: "Upload Complete",
+          description: `${successfulUploads.length} file(s) uploaded successfully and queued for processing.`,
+        });
+      }
       
       setSelectedFiles([]);
       if (fileInputRef.current) {
@@ -132,14 +129,13 @@ const DocumentUpload = () => {
       }
       
       // Refresh the documents list
-      const documents = documentStorage.getAllDocuments();
-      setStoredDocuments(documents);
+      await loadDocuments();
       
     } catch (error) {
       console.error('Upload error:', error);
       toast({
         title: "Upload failed",
-        description: "There was an error processing your files. Please try again.",
+        description: "There was an error uploading your files. Please try again.",
         variant: "destructive",
       });
     } finally {
@@ -234,21 +230,37 @@ export const Dashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
   const [showAI, setShowAI] = useState(false);
-  const [storedDocuments, setStoredDocuments] = useState<StoredDocument[]>([]);
+  const [storedDocuments, setStoredDocuments] = useState<EnhancedDocument[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
 
-  // Load documents and projects from storage on component mount
+  // Load documents and projects from Supabase on component mount
   useEffect(() => {
-    // Initialize mock data if no documents exist
-    documentStorage.initializeMockData();
-    const documents = documentStorage.getAllDocuments();
-    setStoredDocuments(documents);
+    loadDocuments();
+    loadProjects();
+  }, []);
 
-    // Initialize and load projects
+  const loadDocuments = async () => {
+    try {
+      // For mock user, don't filter by user_id - get all documents
+      const userId = user?.id === 'mock-admin-id' ? undefined : user?.id;
+      const documents = await EnhancedDocumentService.getUserDocuments(userId);
+      setStoredDocuments(documents);
+    } catch (error) {
+      console.error('Failed to load documents:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load documents",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const loadProjects = () => {
+    // Initialize and load projects (keeping existing project logic for now)
     projectStorage.initializeDefaultProjects();
     const allProjects = projectStorage.getAllProjects();
     setProjects(allProjects);
-  }, []);
+  };
 
   const handleProjectCreated = (newProject: Project) => {
     setProjects(prev => [...prev, newProject]);
@@ -327,59 +339,46 @@ export const Dashboard = () => {
       setIsUploading(true);
       
       try {
-        const processedDocuments = [];
-        
-        for (const file of selectedFiles) {
+        const uploadPromises = selectedFiles.map(async (file) => {
           try {
-            // Extract text content from file
-            const fileContent = await geminiService.extractTextFromFile(file);
-            
-            // Try to analyze document with AI, fallback to mock service if needed
-            let analysis;
-            try {
-              analysis = await geminiService.analyzeDocument(fileContent, file.name);
-            } catch (error) {
-              console.warn('Gemini AI failed, using mock service:', error);
-              analysis = await mockGeminiService.analyzeDocument(fileContent, file.name);
+            // For mock user, don't pass user_id to avoid RLS issues
+            const userId = user?.id === 'mock-admin-id' ? undefined : user?.id;
+            const result = await EnhancedDocumentService.uploadDocument(file, userId);
+            if (!result.success) {
+              throw new Error(result.error || 'Upload failed');
             }
-            
-            // Save to local storage
-            const savedDocument = documentStorage.saveDocument(analysis, fileContent, file);
-            processedDocuments.push(savedDocument);
+            return result.document;
           } catch (error) {
-            console.error('Error processing file:', file.name, error);
+            console.error('Error uploading file:', file.name, error);
             toast({
-              title: "File Processing Error",
-              description: `Failed to process ${file.name}. Please try again.`,
+              title: "File Upload Error",
+              description: `Failed to upload ${file.name}. Please try again.`,
               variant: "destructive",
             });
+            return null;
           }
-        }
-        
-        toast({
-          title: "Upload and Analysis Complete",
-          description: `${selectedFiles.length} file(s) have been processed and analyzed by AI.`,
         });
+
+        const uploadedDocuments = await Promise.all(uploadPromises);
+        const successfulUploads = uploadedDocuments.filter(doc => doc !== null);
+        
+        if (successfulUploads.length > 0) {
+          toast({
+            title: "Upload Complete",
+            description: `${successfulUploads.length} file(s) uploaded successfully and queued for processing.`,
+          });
+        }
         
         setSelectedFiles([]);
         
-        // Refresh the documents list and knowledge base
-        const documents = documentStorage.getAllDocuments();
-        setStoredDocuments(documents);
-        
-        // Refresh the LangChain knowledge base with new documents
-        try {
-          const { EnhancedDocumentService } = await import('@/services/enhancedDocumentService');
-          await EnhancedDocumentService.refreshKnowledgeBase();
-        } catch (error) {
-          console.warn('Failed to refresh knowledge base:', error);
-        }
+        // Refresh the documents list
+        await loadDocuments();
         
       } catch (error) {
         console.error('Upload error:', error);
         toast({
           title: "Upload failed",
-          description: "There was an error processing your files. Please try again.",
+          description: "There was an error uploading your files. Please try again.",
           variant: "destructive",
         });
       } finally {
@@ -607,6 +606,18 @@ export const Dashboard = () => {
               {t('nav.search')}
             </Button>
             <Button
+              variant={activeTab === "test" ? "default" : "ghost"}
+              className={`w-full justify-start rounded-lg transition-all ${
+                activeTab === "test" 
+                  ? "bg-blue-600 text-white shadow-md hover:bg-blue-700" 
+                  : "hover:bg-white hover:shadow-sm text-gray-700"
+              }`}
+              onClick={() => setActiveTab("test")}
+            >
+              <Settings className="h-4 w-4 mr-3" />
+              System Test
+            </Button>
+            <Button
               variant="ghost"
               className="w-full justify-start rounded-lg hover:bg-white hover:shadow-sm text-gray-700 transition-all"
               onClick={() => navigate('/connections')}
@@ -699,7 +710,7 @@ export const Dashboard = () => {
                           <div>
                             <p className="font-medium text-foreground">{doc.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              Uploaded {new Date(doc.date).toLocaleDateString()}
+                              Uploaded {new Date(doc.created_at).toLocaleDateString()}
                             </p>
                           </div>
                         </div>
@@ -767,7 +778,7 @@ export const Dashboard = () => {
                       <p className="text-sm text-purple-700 font-medium">{t('overview.avgConfidence')}</p>
                       <p className="text-3xl font-bold text-purple-900 mt-1">
                         {storedDocuments.length > 0 
-                          ? Math.round(storedDocuments.reduce((sum, doc) => sum + doc.analysis.confidence, 0) / storedDocuments.length)
+                          ? Math.round(storedDocuments.reduce((sum, doc) => sum + (doc.confidence_score || 0), 0) / storedDocuments.length)
                           : 0}%
                       </p>
                     </div>
@@ -912,6 +923,12 @@ export const Dashboard = () => {
           {activeTab === "search" && (
             <div className="animate-fade-in">
               <EnhancedSearchInterface />
+            </div>
+          )}
+
+          {activeTab === "test" && (
+            <div className="animate-fade-in">
+              <DocumentTestPanel />
             </div>
           )}
         </main>

@@ -1,0 +1,475 @@
+{
+  "name": "Document Processing & AI Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "process-document",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "process-document"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "validation-check",
+              "leftValue": "={{ $json.document_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "eq.{{ $json.document_id }}"
+            },
+            {
+              "name": "select",
+              "value": "*"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-document",
+      "name": "Get Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/storage/v1/object/documents/{{ $json.file_path }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "id": "download-file",
+      "name": "Download File",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "operation": "extractText",
+        "options": {}
+      },
+      "id": "extract-text",
+      "name": "Extract Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Intelligent text chunking\nconst text = $input.first().json.text;\nconst documentId = $('Get Document').first().json[0].id;\nconst documentType = $('Get Document').first().json[0].document_type || 'unknown';\n\n// Chunking strategies based on document type\nconst chunkStrategies = {\n  'pdf': { size: 1000, overlap: 200 },\n  'email': { size: 800, overlap: 150 },\n  'technical': { size: 1200, overlap: 100 },\n  'policy': { size: 1500, overlap: 250 },\n  'default': { size: 1000, overlap: 200 }\n};\n\nconst strategy = chunkStrategies[documentType] || chunkStrategies.default;\n\n// Simple sentence-aware chunking\nfunction chunkText(text, chunkSize, overlap) {\n  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);\n  const chunks = [];\n  let currentChunk = '';\n  let chunkIndex = 0;\n  \n  for (let i = 0; i < sentences.length; i++) {\n    const sentence = sentences[i].trim() + '.';\n    \n    if ((currentChunk + sentence).length > chunkSize && currentChunk.length > 0) {\n      chunks.push({\n        document_id: documentId,\n        chunk_text: currentChunk.trim(),\n        chunk_index: chunkIndex,\n        chunk_tokens: Math.ceil(currentChunk.length / 4) // Rough token estimate\n      });\n      \n      // Handle overlap\n      const words = currentChunk.split(' ');\n      const overlapWords = words.slice(-Math.floor(overlap / 4));\n      currentChunk = overlapWords.join(' ') + ' ' + sentence;\n      chunkIndex++;\n    } else {\n      currentChunk += (currentChunk ? ' ' : '') + sentence;\n    }\n  }\n  \n  // Add final chunk\n  if (currentChunk.trim()) {\n    chunks.push({\n      document_id: documentId,\n      chunk_text: currentChunk.trim(),\n      chunk_index: chunkIndex,\n      chunk_tokens: Math.ceil(currentChunk.length / 4)\n    });\n  }\n  \n  return chunks;\n}\n\nconst chunks = chunkText(text, strategy.size, strategy.overlap);\n\nreturn chunks.map(chunk => ({ json: chunk }));"
+      },
+      "id": "chunk-text",
+      "name": "Chunk Text",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 200]
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "options": {}
+      },
+      "id": "generate-embeddings",
+      "name": "Generate Embeddings",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1560, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/document_chunks",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"document_id\": \"{{ $json.document_id }}\",\n  \"chunk_text\": \"{{ $json.chunk_text }}\",\n  \"chunk_index\": {{ $json.chunk_index }},\n  \"chunk_tokens\": {{ $json.chunk_tokens }},\n  \"embedding\": {{ JSON.stringify($json.embedding) }}\n}",
+        "options": {}
+      },
+      "id": "save-chunks",
+      "name": "Save Chunks",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 200]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "messageValues": [
+            {
+              "role": "system",
+              "message": "You are an AI document analyst. Analyze the provided document and extract key information in a structured format."
+            },
+            {
+              "role": "user",
+              "message": "=Analyze this document and provide:\n1. A concise summary (2-3 sentences)\n2. Key points (3-5 bullet points)\n3. Important entities (people, places, organizations, dates)\n4. Document type classification (policy, procedure, report, email, technical, financial)\n5. Priority level (high, medium, low)\n6. Confidence score (0-100)\n\nDocument content:\n{{ $('Extract Text').first().json.text.substring(0, 4000) }}\n\nRespond in JSON format:\n{\n  \"summary\": \"...\",\n  \"key_points\": [...],\n  \"entities\": [...],\n  \"document_type\": \"...\",\n  \"priority\": \"...\",\n  \"confidence_score\": 85,\n  \"language\": \"en\"\n}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3
+        }
+      },
+      "id": "ai-analysis",
+      "name": "AI Analysis",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1340, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse AI analysis response\nconst aiResponse = $input.first().json.message.content;\nconst documentId = $('Get Document').first().json[0].id;\n\ntry {\n  const analysis = JSON.parse(aiResponse);\n  \n  return [{\n    json: {\n      document_id: documentId,\n      ai_summary: analysis.summary,\n      key_points: analysis.key_points,\n      entities: analysis.entities,\n      document_type: analysis.document_type,\n      priority: analysis.priority,\n      confidence_score: analysis.confidence_score,\n      language: analysis.language || 'en',\n      processing_status: 'completed',\n      processed_at: new Date().toISOString()\n    }\n  }];\n} catch (error) {\n  console.error('Failed to parse AI analysis:', error);\n  return [{\n    json: {\n      document_id: documentId,\n      processing_status: 'failed',\n      error_message: 'Failed to parse AI analysis response'\n    }\n  }];\n}"
+      },
+      "id": "parse-analysis",
+      "name": "Parse Analysis",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1560, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "eq.{{ $json.document_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"ai_summary\": \"{{ $json.ai_summary }}\",\n  \"key_points\": {{ JSON.stringify($json.key_points) }},\n  \"entities\": {{ JSON.stringify($json.entities) }},\n  \"document_type\": \"{{ $json.document_type }}\",\n  \"priority\": \"{{ $json.priority }}\",\n  \"confidence_score\": {{ $json.confidence_score }},\n  \"language\": \"{{ $json.language }}\",\n  \"processing_status\": \"{{ $json.processing_status }}\",\n  \"processed_at\": \"{{ $json.processed_at }}\"\n}",
+        "options": {}
+      },
+      "id": "update-document",
+      "name": "Update Document",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1780, 400]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"document_id\": \"{{ $('Get Document').first().json[0].id }}\",\n  \"status\": \"{{ $json.processing_status || 'completed' }}\",\n  \"chunks_created\": {{ $('Save Chunks').all().length }},\n  \"message\": \"Document processed successfully\"\n}"
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2000, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Invalid input: document_id is required\",\n  \"received\": {{ JSON.stringify($json) }}\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "eq.{{ $('Get Document').first().json[0].id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"processing_status\": \"failed\",\n  \"updated_at\": \"{{ new Date().toISOString() }}\"\n}",
+        "options": {}
+      },
+      "id": "mark-failed",
+      "name": "Mark as Failed",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 600]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Get Document",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document": {
+      "main": [
+        [
+          {
+            "node": "Download File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download File": {
+      "main": [
+        [
+          {
+            "node": "Extract Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Text": {
+      "main": [
+        [
+          {
+            "node": "Chunk Text",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chunk Text": {
+      "main": [
+        [
+          {
+            "node": "Generate Embeddings",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Embeddings": {
+      "main": [
+        [
+          {
+            "node": "Save Chunks",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Chunks": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Analysis": {
+      "main": [
+        [
+          {
+            "node": "Parse Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Analysis": {
+      "main": [
+        [
+          {
+            "node": "Update Document",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update Document": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "your-instance-id"
+  },
+  "id": "document-processing",
+  "tags": []
+}

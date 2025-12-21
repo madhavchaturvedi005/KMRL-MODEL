@@ -213,24 +213,7 @@ const DocumentDetail: React.FC = () => {
                 </div>
               </section>
 
-              <Separator />
 
-              <section>
-                <h3 className="text-base font-semibold mb-3">Original Source Documents</h3>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Button variant="outline" className="sm:w-auto w-full">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View PDF
-                  </Button>
-                  <Button variant="outline" className="sm:w-auto w-full">
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </Button>
-                  <Badge variant="secondary" className="self-start">
-                    {doc.source}
-                  </Badge>
-                </div>
-              </section>
             </CardContent>
           </Card>
 
@@ -280,6 +263,28 @@ const DocumentDetail: React.FC = () => {
                   <div className="flex justify-between">
                     <span className="text-gray-500">Document ID:</span>
                     <span className="text-right font-mono text-xs">{doc.id}</span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                {/* Original Source Documents Section - Moved here */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold">Original Source Documents</h4>
+                  <div className="space-y-2">
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      View PDF
+                    </Button>
+                    <Button variant="outline" size="sm" className="w-full justify-start">
+                      <Download className="h-4 w-4 mr-2" />
+                      Download PDF
+                    </Button>
+                    <div className="pt-1">
+                      <Badge variant="secondary" className="text-xs">
+                        Source: {doc.source}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               </div>

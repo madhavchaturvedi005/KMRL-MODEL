@@ -1,145 +1,385 @@
-# KMRL Knowledge Lens Platform
+# 🧠 KMRL Document Intelligence System
 
-An integrated, AI-powered knowledge management system designed for Kochi Metro Rail Limited (KMRL) that transforms documents into actionable insights through intelligent ingestion, processing, and dissemination.
+A powerful AI-driven document management and analysis system built with **LangChain**, **Google AI**, and **Supabase**. Upload documents, get AI-powered insights, and ask questions using advanced RAG (Retrieval-Augmented Generation) technology.
 
-## Overview
+## 🌟 Features
 
-The Knowledge Lens Platform serves as KMRL's central nervous system for information management, consolidating documents from multiple sources into a unified, searchable repository with AI-powered analysis and role-based access controls.
+### 📄 Document Management
+- **Multi-format Support**: PDF, DOC, DOCX, XLS, XLSX, TXT, CSV
+- **Intelligent Upload**: Drag & drop with real-time processing feedback
+- **Batch Processing**: Upload and process multiple documents simultaneously
+- **Smart Organization**: Auto-categorization and tagging
 
-## Key Features
+### 🤖 AI-Powered Analysis
+- **Document Summarization**: AI-generated summaries and key points
+- **Entity Extraction**: Automatic identification of people, places, organizations
+- **Content Classification**: Smart document type detection
+- **Sentiment Analysis**: Understand document tone and sentiment
 
-### 🔄 Ingestion & Unification Layer
-- **Unified Document Lake**: Central cloud-based repository as single source of truth
-- **Automated Ingestion**: Connectors for email, SharePoint, and cloud repositories
-- **OCR Processing**: Multilingual digitization of scanned PDFs and images (including WhatsApp documents)
+### 💬 Intelligent Q&A (RAG)
+- **Ask Questions**: Natural language queries about your documents
+- **Contextual Answers**: AI responses with source citations
+- **Chat History**: Track all conversations with documents
+- **Multi-document Search**: Find information across your entire library
 
-### 🧠 Intelligence Engine (Core AI)
-- **Smart Classification**: Automatic tagging by document type and priority
-- **Named Entity Recognition**: Extract dates, vendors, parts, codes, and locations
-- **Intelligent Summarization**: Generate headlines, abstracts, and action items
-- **Semantic Search**: Vector embeddings enable natural language queries
+### 🔍 Advanced Search
+- **Semantic Search**: Find documents by meaning, not just keywords
+- **Vector Similarity**: AI-powered document recommendations
+- **Full-text Search**: Traditional keyword-based search
+- **Filter & Sort**: By type, date, priority, processing status
 
-### 📊 Dissemination & Presentation Layer
-- **Role-Based Dashboards**: Tailored views for Engineers, Finance, Executives, and other departments
-- **Proactive Alerts**: Email/SMS/app notifications for high-priority items
-- **Conversational Assistant**: AI chatbot for querying the knowledge base
+## 🏗️ Architecture
 
-### 🔍 Traceability & Feedback Layer
-- **One-Click Traceability**: Link every insight to exact source documents
-- **Feedback Loop**: User ratings continuously improve AI quality
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Frontend      │    │   Backend API   │    │   Google AI     │
+│   (React +      │◄──►│   (LangChain +  │◄──►│   (Gemini +     │
+│    Vite)        │    │    Express)     │    │   Embeddings)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+         │                       │                       
+         │              ┌─────────────────┐              
+         └─────────────►│   Supabase      │              
+                        │   (Database +   │              
+                        │   Storage +     │              
+                        │   Vector Store) │              
+                        └─────────────────┘              
+```
 
-## User Roles & Access
+### 🔧 Technology Stack
 
-The platform supports multiple user roles with specialized dashboards:
+**Frontend:**
+- React 18 with TypeScript
+- Vite for fast development
+- Tailwind CSS for styling
+- Shadcn/ui components
+- Supabase client
 
-- **Administrator** (ADM001): Full system access and user management
-- **Station Controller** (STF001): Operations and safety-focused view
-- **Procurement Officer** (STF002): Vendor and procurement document access
-- **Rolling Stock Engineer** (STF003): Technical documentation and maintenance records
+**Backend:**
+- Node.js with Express
+- LangChain for document processing
+- Google Generative AI (Gemini)
+- Supabase for data & storage
+- Winston for logging
 
-## Technology Stack
+**AI & Data:**
+- Google AI (50% cheaper than OpenAI)
+- Supabase pgvector for embeddings
+- Real-time processing updates
+- Advanced RAG implementation
 
-- **Frontend**: React 18 with TypeScript
-- **UI Framework**: shadcn/ui components with Tailwind CSS
-- **Build Tool**: Vite
-- **Routing**: React Router DOM
-- **State Management**: TanStack Query for server state
-- **Authentication**: Context-based auth system
-- **Icons**: Lucide React
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
+- Node.js 18+
+- Supabase account
+- Google AI API key
 
-- Node.js (v18 or higher)
-- npm or yarn package manager
-
-### Installation
-
-1. Clone the repository:
+### 1. Clone Repository
 ```bash
 git clone https://github.com/madhavchaturvedi005/intelligence-model-sih-25.git
-cd kmrl-knowledge-lens
+cd intelligence-model-sih-25
 ```
 
-2. Install dependencies:
+### 2. Setup Frontend
 ```bash
+# Install dependencies
 npm install
-```
 
-3. Start the development server:
-```bash
+# Configure environment
+cp .env.example .env
+# Edit .env with your Supabase credentials
+
+# Start development server
 npm run dev
 ```
 
-4. Open your browser and navigate to `http://localhost:5173`
+### 3. Setup Backend
+```bash
+cd backend-api
 
-### Demo Credentials
+# Install dependencies
+npm install
 
-Use these credentials to explore different user perspectives:
+# Configure environment
+cp .env.example .env
+# Edit .env with your API keys
 
-| Role | Username | Password |
-|------|----------|----------|
-| Administrator | ADM001 | admin123 |
-| Station Controller | STF001 | staff123 |
-| Procurement Officer | STF002 | staff123 |
-| Rolling Stock Engineer | STF003 | staff123 |
-
-### Sample Documents
-
-The application includes pre-loaded sample documents to demonstrate AI analysis capabilities:
-
-- **Metro Line 3 Environmental Impact Assessment** (High Priority)
-  - Environmental Planning Department
-  - Comprehensive assessment with air quality, noise, and biodiversity analysis
-  - AI-generated summary with 5 key points and detailed insights
-
-- **Smart Ticketing System Technical Specifications** (Medium Priority)
-  - IT Operations Department  
-  - Technical documentation for contactless payment system
-  - Features NFC/QR code support and mobile app integration
-
-## Project Structure
-
-```
-src/
-├── components/          # Reusable UI components
-│   ├── ui/             # shadcn/ui components
-│   ├── Dashboard.tsx   # Main dashboard component
-│   ├── SearchInterface.tsx
-│   └── ...
-├── pages/              # Route components
-├── contexts/           # React contexts (Auth, etc.)
-├── hooks/              # Custom React hooks
-├── lib/                # Utility functions
-├── types/              # TypeScript type definitions
-└── data/               # Mock data and constants
+# Start backend server
+./start.sh
+# Or: npm run dev
 ```
 
-## Available Scripts
+### 4. Setup Database
+```bash
+# Run in Supabase SQL Editor
+# Execute: supabase-enhanced-schema.sql
+```
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run build:dev` - Build in development mode
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+### 5. Test the System
+```bash
+# Test backend
+cd backend-api
+node test-backend.js
 
-## Benefits for KMRL
+# Open frontend
+# Visit: http://localhost:5173
+# Login: admin@kmrl.com / admin123
+```
 
-- **Faster Decision Making**: Instant, pre-digested summaries reduce information processing time
-- **Cross-Functional Awareness**: Keep Engineering, Procurement, Safety, and Finance teams synchronized
-- **Compliance Ready**: Surface high-priority regulatory documents with full audit trails
-- **Institutional Memory**: Permanent, searchable digital knowledge repository
-- **Eliminate Duplication**: Share high-quality summaries across teams to reduce rework
+## 📚 Documentation
 
-## Contributing
+### 📖 Guides
+- [**📚 Documentation Index**](docs/README.md) - Complete documentation overview
+- [**Deployment Guide**](docs/guides/DEPLOYMENT-GUIDE.md) - Complete production setup
+- [**Backend API Documentation**](backend-api/README.md) - API reference
+- [**Phase 1 Setup**](docs/guides/PHASE1-SETUP-GUIDE.md) - Initial configuration
+- [**Supabase Setup**](docs/guides/SUPABASE_SETUP.md) - Database configuration
 
+### 🔧 Configuration Files
+- [**Enhanced Schema**](docs/sql/supabase-enhanced-schema.sql) - Database structure
+- [**RLS Policies**](docs/sql/fix-rls-policies.sql) - Security configuration
+- [**Environment Setup**](.env.example) - Configuration template
+
+## 🎯 Usage Examples
+
+### Upload & Process Documents
+```typescript
+// Upload document with auto-processing
+const result = await EnhancedDocumentService.uploadDocument(
+  file, 
+  userId, 
+  { 
+    priority: 'high',
+    tags: ['important', 'quarterly-report'],
+    autoProcess: true 
+  }
+);
+```
+
+### Ask Questions (RAG)
+```typescript
+// Ask AI about document content
+const response = await EnhancedDocumentService.askDocumentQuestion(
+  documentId,
+  "What are the main financial highlights?",
+  userId
+);
+
+console.log(response.answer); // AI-generated answer
+console.log(response.sources); // Source citations
+```
+
+### Search Documents
+```typescript
+// Semantic search across all documents
+const results = await BackendApiService.searchDocuments(
+  "budget planning strategies",
+  { limit: 10, threshold: 0.7 }
+);
+```
+
+## 🔐 Authentication
+
+### Mock Authentication (Development)
+```bash
+Email: admin@kmrl.com
+Password: admin123
+```
+
+### Production Authentication
+- JWT-based authentication
+- Supabase Auth integration
+- Role-based access control
+- Session management
+
+## 📊 API Endpoints
+
+### Document Management
+```bash
+GET    /api/documents              # List documents
+POST   /api/upload                 # Upload document
+GET    /api/documents/:id          # Get document
+PATCH  /api/documents/:id          # Update document
+DELETE /api/documents/:id          # Delete document
+```
+
+### AI Processing
+```bash
+POST   /api/ai/process/:id         # Process document
+GET    /api/ai/status/:id          # Processing status
+POST   /api/ai/analyze             # Analyze text
+POST   /api/ai/embeddings          # Generate embeddings
+```
+
+### Chat & Q&A
+```bash
+POST   /api/chat/ask/:id           # Ask question (RAG)
+GET    /api/chat/history/:id       # Chat history
+POST   /api/chat/search            # Search conversations
+```
+
+### Search
+```bash
+POST   /api/search/documents       # Search documents
+POST   /api/search/semantic        # Semantic search
+POST   /api/search/similar         # Similar documents
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+**Frontend (.env):**
+```bash
+VITE_SUPABASE_URL=your-supabase-url
+VITE_SUPABASE_ANON_KEY=your-anon-key
+VITE_BACKEND_API_URL=http://localhost:3001
+VITE_USE_BACKEND_API=true
+```
+
+**Backend (backend-api/.env):**
+```bash
+NODE_ENV=development
+SUPABASE_URL=your-supabase-url
+SUPABASE_ANON_KEY=your-anon-key
+GOOGLE_AI_API_KEY=your-google-ai-key
+JWT_SECRET=your-jwt-secret
+```
+
+## 🚀 Deployment
+
+### Production Deployment
+1. **Frontend**: Deploy to Vercel
+2. **Backend**: Deploy to Railway
+3. **Database**: Supabase (managed)
+4. **AI**: Google AI Studio
+
+See [**Deployment Guide**](DEPLOYMENT-GUIDE.md) for detailed instructions.
+
+### Docker Deployment
+```bash
+# Backend
+cd backend-api
+docker build -t kmrl-backend .
+docker run -p 3001:3001 --env-file .env kmrl-backend
+
+# Frontend
+docker build -t kmrl-frontend .
+docker run -p 3000:3000 kmrl-frontend
+```
+
+## 📈 Performance & Scaling
+
+### Optimization Features
+- **Chunked Processing**: Efficient document segmentation
+- **Vector Caching**: Fast similarity searches
+- **Rate Limiting**: API protection
+- **Batch Operations**: Multiple document processing
+- **Real-time Updates**: Live processing feedback
+
+### Scaling Considerations
+- **Database**: Supabase auto-scaling
+- **Backend**: Railway horizontal scaling
+- **AI**: Google AI quota management
+- **Storage**: CDN for file delivery
+
+## 🧪 Testing
+
+### Backend Testing
+```bash
+cd backend-api
+npm test                    # Run test suite
+node test-backend.js       # Quick API test
+```
+
+### Frontend Testing
+```bash
+npm run test               # Component tests
+npm run test:e2e          # End-to-end tests
+```
+
+### Manual Testing
+1. Upload various document types
+2. Test AI processing pipeline
+3. Verify RAG Q&A functionality
+4. Check search capabilities
+5. Test batch operations
+
+## 🔍 Monitoring & Debugging
+
+### Health Checks
+```bash
+# Backend health
+curl http://localhost:3001/health
+
+# AI services health
+curl http://localhost:3001/api/ai/health
+```
+
+### Logging
+- **Backend**: Winston structured logging
+- **Frontend**: Console & error tracking
+- **Database**: Supabase dashboard
+- **AI**: Google AI Studio metrics
+
+## 🤝 Contributing
+
+### Development Setup
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create feature branch
+3. Make changes
+4. Add tests
+5. Submit pull request
 
-## License
+### Code Standards
+- TypeScript for type safety
+- ESLint for code quality
+- Prettier for formatting
+- Conventional commits
 
-This project is proprietary software developed for Kochi Metro Rail Limited (KMRL).
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## 🆘 Support & Help
+
+### Common Issues
+- **Upload failures**: Check file size (50MB limit) and format
+- **AI errors**: Verify Google AI API key and quotas
+- **Database issues**: Check Supabase connection and RLS policies
+- **Processing stuck**: Monitor backend logs for errors
+
+### Getting Help
+1. Check [📚 Documentation Index](docs/README.md)
+2. Review [Deployment Guide](docs/guides/DEPLOYMENT-GUIDE.md)
+3. Review backend logs
+4. Test API endpoints individually
+5. Verify environment variables
+6. Check service health endpoints
+
+### Useful Commands
+```bash
+# Check backend status
+curl -I http://localhost:3001/health
+
+# Test document upload
+curl -X POST http://localhost:3001/api/upload \
+  -F "document=@test.pdf"
+
+# Monitor backend logs
+cd backend-api && npm run dev
+
+# Check database connection
+# Use Supabase dashboard SQL editor
+```
+
+---
+
+**Built with ❤️ for intelligent document management**
+
+🔗 **Links:**
+- [Live Demo](https://your-app.vercel.app) (Coming Soon)
+- [📚 Complete Documentation](docs/README.md)
+- [API Documentation](backend-api/README.md)
+- [Deployment Guide](docs/guides/DEPLOYMENT-GUIDE.md)
+- [GitHub Repository](https://github.com/madhavchaturvedi005/intelligence-model-sih-25)

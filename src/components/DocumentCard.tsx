@@ -1,28 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Calendar, FileText, ArrowRight, Brain, MoreHorizontal, Sparkles, Mail, Upload, Cloud, HardDrive, Database, Globe } from "lucide-react";
-
-interface DocumentSummary {
-  headline: string;
-  keyPoints: string[];
-  detailed: string;
-}
-
-interface Document {
-  id: string;
-  title: string;
-  type: string;
-  department: string;
-  date: string;
-  summary: DocumentSummary;
-  priority: "high" | "medium" | "low";
-  source: string;
-}
+import { Calendar, FileText, ArrowRight, Brain, Mail, Upload, Cloud, HardDrive, Database, Globe } from "lucide-react";
+import { EnhancedDocument } from "@/services/enhancedDocumentService";
 
 interface DocumentCardProps {
-  document: Document;
+  document: EnhancedDocument;
 }
 
 export const DocumentCard = ({ document }: DocumentCardProps) => {
@@ -31,219 +14,113 @@ export const DocumentCard = ({ document }: DocumentCardProps) => {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case "high":
-        return "bg-red-500";
+        return "border-l-red-500";
       case "medium":
-        return "bg-amber-500";
+        return "border-l-amber-500";
       default:
-        return "bg-emerald-500";
+        return "border-l-emerald-500";
     }
   };
 
   const getTypeColor = (type: string) => {
-    switch (type.toLowerCase()) {
+    switch (type?.toLowerCase()) {
       case "pdf":
-        return "bg-red-50 text-red-700 border-red-200";
+        return "text-red-600 bg-red-50";
       case "doc":
       case "docx":
-        return "bg-blue-50 text-blue-700 border-blue-200";
+        return "text-blue-600 bg-blue-50";
       case "excel":
       case "xlsx":
-        return "bg-green-50 text-green-700 border-green-200";
+        return "text-green-600 bg-green-50";
       default:
-        return "bg-slate-50 text-slate-700 border-slate-200";
+        return "text-slate-600 bg-slate-50";
     }
   };
 
-  const getSourceInfo = (source: string) => {
+  const getSourceIcon = (source: string) => {
     const lowerSource = source.toLowerCase();
     
     if (lowerSource.includes("email") || lowerSource.includes("mail")) {
-      return {
-        icon: <Mail className="h-4 w-4" />,
-        label: "Email",
-        color: "bg-blue-500 text-white border-blue-600"
-      };
+      return <Mail className="h-3.5 w-3.5 text-blue-600" />;
     }
-    
     if (lowerSource.includes("manual") || lowerSource.includes("upload")) {
-      return {
-        icon: <Upload className="h-4 w-4" />,
-        label: "Manual Upload",
-        color: "bg-green-500 text-white border-green-600"
-      };
+      return <Upload className="h-3.5 w-3.5 text-green-600" />;
     }
-    
     if (lowerSource.includes("sharepoint")) {
-      return {
-        icon: <Cloud className="h-4 w-4" />,
-        label: "SharePoint",
-        color: "bg-purple-500 text-white border-purple-600"
-      };
+      return <Cloud className="h-3.5 w-3.5 text-purple-600" />;
     }
-    
     if (lowerSource.includes("google") || lowerSource.includes("drive")) {
-      return {
-        icon: <HardDrive className="h-4 w-4" />,
-        label: "Google Drive",
-        color: "bg-yellow-500 text-white border-yellow-600"
-      };
+      return <HardDrive className="h-3.5 w-3.5 text-yellow-600" />;
     }
-    
     if (lowerSource.includes("onedrive")) {
-      return {
-        icon: <Cloud className="h-4 w-4" />,
-        label: "OneDrive",
-        color: "bg-indigo-500 text-white border-indigo-600"
-      };
+      return <Cloud className="h-3.5 w-3.5 text-indigo-600" />;
     }
-    
     if (lowerSource.includes("database") || lowerSource.includes("db")) {
-      return {
-        icon: <Database className="h-4 w-4" />,
-        label: "Database",
-        color: "bg-gray-600 text-white border-gray-700"
-      };
+      return <Database className="h-3.5 w-3.5 text-gray-600" />;
     }
-    
     if (lowerSource.includes("web") || lowerSource.includes("website")) {
-      return {
-        icon: <Globe className="h-4 w-4" />,
-        label: "Web",
-        color: "bg-cyan-500 text-white border-cyan-600"
-      };
+      return <Globe className="h-3.5 w-3.5 text-cyan-600" />;
     }
     
-    return {
-      icon: <FileText className="h-4 w-4" />,
-      label: source || "Unknown",
-      color: "bg-slate-500 text-white border-slate-600"
-    };
+    return <FileText className="h-3.5 w-3.5 text-gray-600" />;
   };
 
   const handleClick = () => {
     navigate(`/document/${document.id}`);
   };
 
-  const sourceInfo = getSourceInfo(document.source);
+  // Get file extension from file_name
+  const fileExtension = document.file_name?.split('.').pop()?.toUpperCase() || 'FILE';
 
   return (
-    <Card className="group relative overflow-hidden bg-white shadow-md hover:shadow-xl transition-all duration-300 cursor-pointer border border-gray-200 rounded-xl" onClick={handleClick}>
-      {/* Priority indicator */}
-      <div className={`absolute top-0 left-0 w-full h-1.5 ${getPriorityColor(document.priority)}`} />
-      
-      <div className="p-6">
-        {/* Source Tags Row - At the very top */}
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            {/* Source Tag - Most prominent and visible */}
-            <Badge className={`text-sm flex items-center gap-2 px-3 py-1.5 font-semibold shadow-sm ${sourceInfo.color}`}>
-              {sourceInfo.icon}
-              <span>{sourceInfo.label}</span>
-            </Badge>
-            
-            {/* File Type Tag */}
-            <Badge variant="outline" className={`text-sm px-3 py-1.5 font-medium ${getTypeColor(document.type)}`}>
-              {document.type.toUpperCase()}
-            </Badge>
+    <Card 
+      className={`group p-4 hover:shadow-md transition-all duration-200 cursor-pointer border-l-4 ${getPriorityColor(document.priority)} bg-white hover:bg-gray-50/50`}
+      onClick={handleClick}
+    >
+      {/* Header */}
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <div className="p-2 bg-gray-100 rounded-lg flex-shrink-0">
+            <FileText className="h-4 w-4 text-gray-600" />
           </div>
-          
-          {/* AI Indicator and Priority */}
-          <div className="flex items-center gap-2">
-            <Badge className="text-sm px-3 py-1.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white flex items-center gap-1.5 shadow-sm">
-              <Sparkles className="h-4 w-4" />
-              <span>AI Analyzed</span>
-            </Badge>
-            <div className={`w-4 h-4 rounded-full ${getPriorityColor(document.priority)} shadow-sm`} />
+          <div className="flex-1 min-w-0">
+            <h4 className="font-semibold text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">
+              {document.title}
+            </h4>
+            <p className="text-xs text-gray-500 mt-0.5">{document.department || 'General'}</p>
           </div>
         </div>
+        <ArrowRight className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors flex-shrink-0" />
+      </div>
 
-        {/* Header Section */}
-        <div className="flex items-start justify-between mb-5">
-          <div className="flex-1 min-w-0 pr-4">
-            <div className="flex items-start gap-4 mb-3">
-              <div className="p-3 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl shadow-sm flex-shrink-0">
-                <FileText className="h-6 w-6 text-gray-700" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold text-gray-900 text-xl group-hover:text-blue-600 transition-colors leading-tight mb-2">
-                  {document.title}
-                </h3>
-                {/* Meta information */}
-                <div className="flex items-center gap-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-1.5">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(document.date).toLocaleDateString('en-US', { 
-                      month: 'long', 
-                      day: 'numeric', 
-                      year: 'numeric' 
-                    })}</span>
-                  </div>
-                  <span className="text-gray-400">•</span>
-                  <span className="font-medium">{document.department}</span>
-                </div>
-              </div>
-            </div>
+      {/* Summary */}
+      <div className="mb-3">
+        <p className="text-xs text-gray-600 line-clamp-2 leading-relaxed">
+          {document.ai_summary || 'Document uploaded and ready for processing...'}
+        </p>
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
+            {getSourceIcon(document.source)}
+            <span className="text-xs text-gray-500 capitalize">{document.source}</span>
           </div>
-          
-          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 p-2">
-            <MoreHorizontal className="h-5 w-5" />
-          </Button>
-        </div>
-
-        {/* AI Summary Section - Much larger and fully visible */}
-        <div className="mb-6">
-          <div className="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-5 rounded-xl border-2 border-blue-100 shadow-sm">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="p-2 bg-blue-500 rounded-lg shadow-sm">
-                <Brain className="h-5 w-5 text-white" />
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-blue-900">AI Summary</h4>
-                <p className="text-sm text-blue-700">Generated insights and key points</p>
-              </div>
-            </div>
-            <div className="space-y-3">
-              <p className="text-base text-gray-800 leading-relaxed font-medium">
-                {document.summary.headline}
-              </p>
-              {document.summary.keyPoints && document.summary.keyPoints.length > 0 && (
-                <div className="space-y-2">
-                  <h5 className="text-sm font-semibold text-gray-700 mb-2">Key Points:</h5>
-                  <ul className="space-y-1">
-                    {document.summary.keyPoints.slice(0, 3).map((point, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 mt-2 flex-shrink-0" />
-                        <span>{point}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {document.summary.keyPoints.length > 3 && (
-                    <p className="text-xs text-gray-600 italic">
-                      +{document.summary.keyPoints.length - 3} more key points available
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
+          <div className={`px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(fileExtension)}`}>
+            {fileExtension}
           </div>
         </div>
-
-        {/* Action Buttons */}
-        <div className="flex gap-3">
-          <Button 
-            className="flex-1 bg-blue-600 hover:bg-blue-700 text-white shadow-md hover:shadow-lg transition-all duration-200 py-3"
-            onClick={(e) => { e.stopPropagation(); handleClick(); }}
-          >
-            <span className="font-semibold">View Full Document</span>
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
-          <Button 
-            variant="outline" 
-            className="px-4 py-3 border-gray-300 hover:bg-gray-50 transition-colors"
-            onClick={(e) => { e.stopPropagation(); }}
-          >
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
+        
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 text-xs text-blue-600">
+            <Brain className="h-3 w-3" />
+            <span>{document.processing_status === 'completed' ? 'AI' : document.processing_status}</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-gray-500">
+            <Calendar className="h-3 w-3" />
+            <span>{new Date(document.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+          </div>
         </div>
       </div>
     </Card>

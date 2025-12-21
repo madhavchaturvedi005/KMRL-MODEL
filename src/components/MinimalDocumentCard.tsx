@@ -1,26 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { FileText, Brain, Calendar, Mail, Upload, Cloud, HardDrive, Database, Globe } from "lucide-react";
-
-interface DocumentSummary {
-  headline: string;
-  keyPoints: string[];
-  detailed: string;
-}
-
-interface Document {
-  id: string;
-  title: string;
-  type: string;
-  department: string;
-  date: string;
-  summary: DocumentSummary;
-  priority: "high" | "medium" | "low";
-  source: string;
-}
+import { EnhancedDocument } from "@/services/enhancedDocumentService";
 
 interface MinimalDocumentCardProps {
-  document: Document;
+  document: EnhancedDocument;
 }
 
 export const MinimalDocumentCard = ({ document }: MinimalDocumentCardProps) => {
@@ -51,7 +35,7 @@ export const MinimalDocumentCard = ({ document }: MinimalDocumentCardProps) => {
         return <Upload className="h-3 w-3 text-green-600" />;
       case "sharepoint":
         return <Cloud className="h-3 w-3 text-purple-600" />;
-      case "google drive":
+      case "google_drive":
       case "googledrive":
         return <HardDrive className="h-3 w-3 text-yellow-600" />;
       case "onedrive":
@@ -78,7 +62,7 @@ export const MinimalDocumentCard = ({ document }: MinimalDocumentCardProps) => {
     >
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          {getTypeIcon(document.type)}
+          {getTypeIcon(document.file_name)}
           <h5 className="font-medium text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors">
             {document.title}
           </h5>
@@ -89,7 +73,9 @@ export const MinimalDocumentCard = ({ document }: MinimalDocumentCardProps) => {
       </div>
       
       <div className="space-y-1">
-        <p className="text-xs text-gray-600 line-clamp-1">{document.summary.headline}</p>
+        <p className="text-xs text-gray-600 line-clamp-1">
+          {document.ai_summary || 'Processing...'}
+        </p>
         <div className="flex justify-between text-xs text-gray-500">
           <div className="flex items-center gap-2">
             <span className="flex items-center gap-1">
@@ -99,7 +85,7 @@ export const MinimalDocumentCard = ({ document }: MinimalDocumentCardProps) => {
             <span>•</span>
             <span className="flex items-center gap-1">
               <Calendar className="h-3 w-3" />
-              {new Date(document.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+              {new Date(document.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
           </div>
           <span className="capitalize">{document.priority}</span>

@@ -1,0 +1,408 @@
+{
+  "name": "Ask AI About Document (RAG)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ask-document",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "webhookId": "ask-document"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "document-id-check",
+              "leftValue": "={{ $json.document_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            },
+            {
+              "id": "question-check",
+              "leftValue": "={{ $json.question }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "validate-input",
+      "name": "Validate Input",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-small",
+        "inputType": "text",
+        "input": "={{ $json.question }}",
+        "options": {}
+      },
+      "id": "generate-query-embedding",
+      "name": "Generate Query Embedding",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [680, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/rpc/match_document_chunks",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"query_embedding\": {{ JSON.stringify($json.embedding) }},\n  \"match_threshold\": 0.7,\n  \"match_count\": 5,\n  \"doc_id\": \"{{ $('Webhook Trigger').first().json.document_id }}\"\n}",
+        "options": {}
+      },
+      "id": "vector-search",
+      "name": "Vector Search",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 200]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/documents",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            }
+          ]
+        },
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "eq.{{ $('Webhook Trigger').first().json.document_id }}"
+            },
+            {
+              "name": "select",
+              "value": "title,document_type,ai_summary"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "get-document-info",
+      "name": "Get Document Info",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 400]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build context from search results\nconst searchResults = $('Vector Search').first().json;\nconst documentInfo = $('Get Document Info').first().json[0];\nconst question = $('Webhook Trigger').first().json.question;\n\n// Extract relevant chunks\nconst contextChunks = searchResults.map(result => ({\n  text: result.chunk_text,\n  similarity: result.similarity,\n  chunk_index: result.chunk_index\n}));\n\n// Build context string\nconst context = contextChunks\n  .map((chunk, index) => `[Chunk ${chunk.chunk_index}]: ${chunk.text}`)\n  .join('\\n\\n');\n\n// Create system prompt\nconst systemPrompt = `You are an AI assistant helping users understand documents. You have access to relevant excerpts from a document titled \"${documentInfo.title}\" (type: ${documentInfo.document_type}).\n\nDocument Summary: ${documentInfo.ai_summary || 'No summary available'}\n\nInstructions:\n1. Answer the user's question based ONLY on the provided context\n2. If the context doesn't contain enough information, say so clearly\n3. Cite specific chunks when possible (e.g., \"According to Chunk 2...\")\n4. Be concise but comprehensive\n5. If asked about something not in the context, explain that you can only answer based on the provided document excerpts`;\n\nconst userPrompt = `Context from document:\\n${context}\\n\\nQuestion: ${question}\\n\\nPlease provide a helpful answer based on the context above.`;\n\nreturn [{\n  json: {\n    system_prompt: systemPrompt,\n    user_prompt: userPrompt,\n    context_chunks: contextChunks.map(c => c.chunk_index),\n    question: question,\n    document_id: $('Webhook Trigger').first().json.document_id,\n    user_id: $('Webhook Trigger').first().json.user_id\n  }\n}];"
+      },
+      "id": "build-context",
+      "name": "Build Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 300]
+    },
+    {
+      "parameters": {
+        "model": "gpt-4o-mini",
+        "messages": {
+          "messageValues": [
+            {
+              "role": "system",
+              "message": "={{ $json.system_prompt }}"
+            },
+            {
+              "role": "user",
+              "message": "={{ $json.user_prompt }}"
+            }
+          ]
+        },
+        "options": {
+          "temperature": 0.3,
+          "maxTokens": 500
+        }
+      },
+      "id": "generate-answer",
+      "name": "Generate Answer",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1340, 300]
+    },
+    {
+      "parameters": {
+        "url": "https://YOUR_SUPABASE_PROJECT.supabase.co/rest/v1/document_chats",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "supabaseApi",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "apikey",
+              "value": "={{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $credentials.supabaseApi.serviceRole }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"document_id\": \"{{ $('Build Context').first().json.document_id }}\",\n  \"user_id\": \"{{ $('Build Context').first().json.user_id }}\",\n  \"question\": \"{{ $('Build Context').first().json.question }}\",\n  \"answer\": \"{{ $json.message.content }}\",\n  \"context_chunks\": {{ JSON.stringify($('Build Context').first().json.context_chunks) }}\n}",
+        "options": {}
+      },
+      "id": "save-chat",
+      "name": "Save Chat",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"answer\": \"{{ $('Generate Answer').first().json.message.content }}\",\n  \"context_chunks\": {{ JSON.stringify($('Build Context').first().json.context_chunks) }},\n  \"document_id\": \"{{ $('Build Context').first().json.document_id }}\",\n  \"question\": \"{{ $('Build Context').first().json.question }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\"\n}"
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1780, 300]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": false,\n  \"error\": \"Invalid input: document_id and question are required\",\n  \"received\": {{ JSON.stringify($json) }}\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "has-results",
+              "leftValue": "={{ $json.length }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "check-search-results",
+      "name": "Check Search Results",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1120, 200]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"answer\": \"I couldn't find relevant information in this document to answer your question. The document may not contain the information you're looking for, or your question might be too specific. Try rephrasing your question or asking about the general content of the document.\",\n  \"context_chunks\": [],\n  \"document_id\": \"{{ $('Webhook Trigger').first().json.document_id }}\",\n  \"question\": \"{{ $('Webhook Trigger').first().json.question }}\",\n  \"timestamp\": \"{{ new Date().toISOString() }}\",\n  \"note\": \"No relevant context found\"\n}"
+      },
+      "id": "no-context-response",
+      "name": "No Context Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1340, 100]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate Input": {
+      "main": [
+        [
+          {
+            "node": "Generate Query Embedding",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Document Info",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Query Embedding": {
+      "main": [
+        [
+          {
+            "node": "Vector Search",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Vector Search": {
+      "main": [
+        [
+          {
+            "node": "Check Search Results",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Document Info": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Context": {
+      "main": [
+        [
+          {
+            "node": "Generate Answer",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Generate Answer": {
+      "main": [
+        [
+          {
+            "node": "Save Chat",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Chat": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check Search Results": {
+      "main": [
+        [
+          {
+            "node": "Build Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "No Context Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "1",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "your-instance-id"
+  },
+  "id": "ask-ai-rag",
+  "tags": []
+}

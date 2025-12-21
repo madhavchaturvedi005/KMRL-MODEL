@@ -1,0 +1,57 @@
+{
+  "name": "kmrl-document-intelligence-backend",
+  "version": "1.0.0",
+  "description": "Backend API for KMRL Document Intelligence System with LangChain + Google AI",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "build": "echo 'No build step required'",
+    "test": "jest"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "helmet": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "multer": "^1.4.5-lts.1",
+    "jsonwebtoken": "^9.0.2",
+    "@supabase/supabase-js": "^2.38.4",
+    "@google/generative-ai": "^0.2.1",
+    "langchain": "^0.1.25",
+    "@langchain/google-genai": "^0.0.8",
+    "@langchain/community": "^0.0.34",
+    "pdf-parse": "^1.1.1",
+    "mammoth": "^1.6.0",
+    "xlsx": "^0.18.5",
+    "sharp": "^0.32.6",
+    "winston": "^3.11.0",
+    "joi": "^17.11.0",
+    "dotenv": "^16.3.1",
+    "compression": "^1.7.4",
+    "express-validator": "^7.0.1",
+    "node-cron": "^3.0.3",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2",
+    "jest": "^29.7.0",
+    "supertest": "^6.3.3",
+    "node-fetch": "^3.3.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": [
+    "document-intelligence",
+    "ai",
+    "langchain",
+    "google-ai",
+    "rag",
+    "embeddings",
+    "kmrl"
+  ],
+  "author": "KMRL Development Team",
+  "license": "MIT"
+}
