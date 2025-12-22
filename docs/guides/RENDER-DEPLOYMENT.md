@@ -69,11 +69,29 @@ SUPABASE_SERVICE_ROLE_KEY=your-supabase-service-role-key
 # Google AI Configuration
 GOOGLE_AI_API_KEY=your-google-ai-api-key
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key-min-32-chars
+# JWT Configuration (generate a secure secret)
+JWT_SECRET=your-generated-jwt-secret-64-chars-long
 
 # Frontend URL (for CORS)
 FRONTEND_URL=https://your-frontend.vercel.app
+```
+
+**💡 How to Generate JWT_SECRET:**
+```bash
+# Method 1: Using Node.js (recommended)
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# Method 2: Using the helper script
+cd backend-api
+./generate-secrets.sh
+
+# Method 3: Using OpenSSL
+openssl rand -hex 64
+```
+
+**Example JWT_SECRET:**
+```bash
+JWT_SECRET=44f8c6772c6fdcb633dc8f6ec2e2e9cc7a872d9e885a164ce4c9a26aab43ce7969a66524814ebe18638e2d355b359e56b2c8543135a0d660357faca7970d42c1
 ```
 
 ### Optional Variables:
@@ -167,7 +185,14 @@ Render automatically deploys when you push to your connected branch:
 - Ensure `package-lock.json` exists
 - Verify Node.js version compatibility
 
-#### 2. Environment Variables Not Set
+**Note**: Sharp has been removed from dependencies to prevent native compilation issues.
+
+#### 2. Sharp Installation Error (Fixed)
+**Problem**: `error: install script from "sharp" exited with 127`
+
+**Solution**: ✅ **Already Fixed** - Sharp has been removed from dependencies as it's not needed for document processing.
+
+#### 3. Environment Variables Not Set
 **Problem**: API returns configuration errors
 
 **Solution**:
@@ -175,7 +200,7 @@ Render automatically deploys when you push to your connected branch:
 - Ensure no typos in variable names
 - Verify API keys are valid
 
-#### 3. Health Check Fails
+#### 4. Health Check Fails
 **Problem**: Service shows as unhealthy
 
 **Solution**:
@@ -183,13 +208,15 @@ Render automatically deploys when you push to your connected branch:
 - Verify `/health` endpoint exists and returns 200
 - Check if all dependencies are properly installed
 
-#### 4. CORS Errors
+#### 5. CORS Errors
 **Problem**: Frontend can't connect to backend
 
 **Solution**:
 - Set correct `FRONTEND_URL` environment variable
 - Ensure CORS is configured in Express server
 - Check if frontend URL matches exactly (no trailing slash)
+
+For more detailed troubleshooting, see: [**Deployment Troubleshooting Guide**](DEPLOYMENT-TROUBLESHOOTING.md)
 
 #### 5. Database Connection Issues
 **Problem**: Supabase connection fails

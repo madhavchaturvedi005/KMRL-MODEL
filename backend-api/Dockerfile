@@ -8,16 +8,7 @@ WORKDIR /app
 RUN apk add --no-cache \
     python3 \
     make \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    musl-dev \
-    giflib-dev \
-    pixman-dev \
-    pangomm-dev \
-    libjpeg-turbo-dev \
-    freetype-dev
+    g++
 
 # Copy package files first for better caching
 COPY package.json ./

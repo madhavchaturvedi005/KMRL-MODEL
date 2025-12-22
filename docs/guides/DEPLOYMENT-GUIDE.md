@@ -121,8 +121,17 @@ SUPABASE_URL=your-supabase-url
 SUPABASE_ANON_KEY=your-anon-key
 SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 GOOGLE_AI_API_KEY=your-google-ai-key
-JWT_SECRET=your-jwt-secret
+JWT_SECRET=your-generated-jwt-secret-64-chars-long
 FRONTEND_URL=https://your-frontend.vercel.app
+```
+
+**💡 Generate JWT_SECRET:**
+```bash
+# Run this command to generate a secure JWT secret:
+node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
+
+# Or use the helper script:
+cd backend-api && ./generate-secrets.sh
 ```
 
 ### 4. Verify Backend Deployment
