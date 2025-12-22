@@ -40,14 +40,6 @@ PORT=10000
 # Frontend (Update with your actual frontend URL)
 FRONTEND_URL=https://your-frontend-domain.vercel.app
 
-# Supabase (Copy from your .env file)
-SUPABASE_URL=https://jleufzctebtcpdqlzckf.supabase.co
-SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZXVmemN0ZWJ0Y3BkcWx6Y2tmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkzMDQ2NDgsImV4cCI6MjA3NDg4MDY0OH0.jfGP-rbDFlxp5bTmjD90f0dLq42OvGTkN3xr3dZuny8
-SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpsZXVmemN0ZWJ0Y3BkcWx6Y2tmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTMwNDY0OCwiZXhwIjoyMDc0ODgwNjQ4fQ.7qs0bks9wwliOM0TxUaAaAWITIopxzL9kuz0I2-n8ec
-
-# Google AI (Copy from your .env file)
-GOOGLE_AI_API_KEY=AIzaSyA-R_mubDtbW8Q6UasOb29kLTHTrSf5TZI
-
 # JWT (Let Render auto-generate or use your own)
 JWT_SECRET=your-jwt-secret-here
 
