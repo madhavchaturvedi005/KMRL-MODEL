@@ -1,6 +1,5 @@
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 import { Document } from 'langchain/document';
-import pdfParse from 'pdf-parse';
 import mammoth from 'mammoth';
 import xlsx from 'xlsx';
 import googleAIService from './googleAI.js';
@@ -142,6 +141,9 @@ class DocumentProcessor {
 
   async extractFromPDF(buffer) {
     try {
+      // Dynamic import to avoid startup issues
+      const pdfParseModule = await import('pdf-parse');
+      const pdfParse = pdfParseModule.default;
       const data = await pdfParse(buffer);
       return data.text;
     } catch (error) {

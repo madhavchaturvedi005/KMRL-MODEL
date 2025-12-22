@@ -6,6 +6,9 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 
+// Load environment variables FIRST
+dotenv.config();
+
 // Import routes
 import documentsRouter from './routes/documents.js';
 import uploadRouter from './routes/upload.js';
@@ -16,8 +19,6 @@ import chatRouter from './routes/chat.js';
 // Import middleware
 import { errorHandler } from './middleware/errorHandler.js';
 import { logger } from './utils/logger.js';
-
-dotenv.config();
 
 const app = express();
 const server = createServer(app);
@@ -136,13 +137,32 @@ process.on('SIGINT', () => {
   });
 });
 
-// Start server
-server.listen(PORT, '0.0.0.0', () => {
-  logger.info(`🚀 KMRL Document Intelligence Backend running on port ${PORT}`);
-  logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
-  logger.info(`🤖 Google AI: ${process.env.GOOGLE_AI_API_KEY ? '✅ Configured' : '❌ Missing'}`);
-  logger.info(`🗄️ Supabase: ${process.env.SUPABASE_URL ? '✅ Configured' : '❌ Missing'}`);
+// Handle uncaught exceptions
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  console.error('Uncaught Exception:', error);
+  process.exit(1);
 });
+
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.exit(1);
+});
+
+// Start server with error handling
+try {
+  server.listen(PORT, '0.0.0.0', () => {
+    logger.info(`🚀 KMRL Document Intelligence Backend running on port ${PORT}`);
+    logger.info(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+    logger.info(`🔗 Health check: http://localhost:${PORT}/health`);
+    logger.info(`🤖 Google AI: ${process.env.GOOGLE_AI_API_KEY ? '✅ Configured' : '❌ Missing'}`);
+    logger.info(`🗄️ Supabase: ${process.env.SUPABASE_URL ? '✅ Configured' : '❌ Missing'}`);
+  });
+} catch (error) {
+  logger.error('Failed to start server:', error);
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
 
 export default app;

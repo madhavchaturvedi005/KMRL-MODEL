@@ -6,7 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "node src/server.js",
+    "start:minimal": "node src/minimal-server.js",
     "dev": "nodemon src/server.js",
+    "dev:minimal": "nodemon src/minimal-server.js",
+    "debug": "node debug-startup.js",
+    "test:credentials": "node test-credentials.js",
     "build": "echo 'No build step required'",
     "test": "jest"
   },

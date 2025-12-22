@@ -240,7 +240,7 @@ router.post('/batch',
       logger.info(`Batch upload request by user ${userId}: ${files.length} files`);
 
       const results = [];
-      const errors = [];
+      const uploadErrors = [];
 
       // Process each file
       for (let i = 0; i < files.length; i++) {
@@ -318,7 +318,7 @@ router.post('/batch',
 
         } catch (fileError) {
           logger.error(`Failed to upload file ${file.originalname}:`, fileError);
-          errors.push({
+          uploadErrors.push({
             fileName: file.originalname,
             error: fileError.message
           });
@@ -326,7 +326,7 @@ router.post('/batch',
       }
 
       const successCount = results.length;
-      const errorCount = errors.length;
+      const errorCount = uploadErrors.length;
 
       logger.info(`Batch upload completed: ${successCount} successful, ${errorCount} failed`);
 
@@ -335,7 +335,7 @@ router.post('/batch',
         message: `Batch upload completed: ${successCount}/${files.length} files uploaded successfully`,
         results: {
           successful: results,
-          failed: errors,
+          failed: uploadErrors,
           summary: {
             total: files.length,
             successful: successCount,

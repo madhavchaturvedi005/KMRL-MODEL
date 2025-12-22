@@ -11,9 +11,9 @@ class GoogleAIService {
 
     this.genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY);
     this.models = {
-      flash: 'gemini-1.5-flash',      // Fast, cost-effective for analysis
-      pro: 'gemini-1.5-pro',         // High-quality for complex tasks
-      embedding: 'text-embedding-004' // Latest embedding model
+      flash: 'gemini-2.5-flash',        // Fast, cost-effective for analysis
+      pro: 'gemini-2.5-flash',         // High-quality for complex tasks
+      embedding: 'embedding-gecko-001'  // Embedding model
     };
   }
 

@@ -4,7 +4,7 @@ import rateLimit from 'express-rate-limit';
 
 import { authenticateToken } from '../middleware/auth.js';
 import qdrantService from '../services/qdrant.js';
-import openaiService from '../services/openai.js';
+import googleAIService from '../services/googleAI.js';
 import supabaseService from '../services/supabase.js';
 import { logger } from '../utils/logger.js';
 
@@ -59,7 +59,7 @@ router.post('/semantic',
       logger.info(`Semantic search request: "${query}" by user ${userId}`);
 
       // Generate embedding for the query
-      const queryEmbedding = await openaiService.generateEmbedding(query);
+      const queryEmbedding = await googleAIService.generateEmbedding(query);
 
       // Perform vector search
       const searchResults = await qdrantService.searchSimilar(
@@ -259,13 +259,13 @@ router.get('/health',
   async (req, res) => {
     try {
       const qdrantHealth = await qdrantService.healthCheck();
-      const openaiHealth = await openaiService.healthCheck();
+      const googleAIHealth = await googleAIService.healthCheck();
 
       res.json({
         success: true,
         services: {
           qdrant: qdrantHealth,
-          openai: openaiHealth
+          googleAI: googleAIHealth
         },
         timestamp: new Date().toISOString()
       });

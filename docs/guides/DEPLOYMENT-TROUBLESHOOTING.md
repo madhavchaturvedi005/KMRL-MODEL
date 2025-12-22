@@ -2,6 +2,26 @@
 
 Common deployment issues and their solutions for the KMRL Document Intelligence System.
 
+## 🚨 **Application Startup Issues**
+
+### **"Application exited early"**
+
+**Problem**: Node.js application crashes during startup
+
+**Solution**: See detailed guide: [**Startup Troubleshooting**](STARTUP-TROUBLESHOOTING.md)
+
+**Quick fixes**:
+```bash
+# 1. Try minimal server
+cd backend-api
+npm run start:minimal
+
+# 2. Run debug script
+node debug-startup.js
+
+# 3. Check logs in Render dashboard
+```
+
 ## 📦 **Package Installation Issues**
 
 ### **Sharp Installation Error (Exit Code 127)**

@@ -3,7 +3,7 @@ import { logger } from '../utils/logger.js';
 
 class SupabaseService {
   constructor() {
-    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_KEY) {
+    if (!process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
       logger.error('Supabase credentials not provided');
       this.supabase = null;
       return;
@@ -11,7 +11,7 @@ class SupabaseService {
 
     this.supabase = createClient(
       process.env.SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY
     );
 
     logger.info('Supabase service initialized');
