@@ -1,10 +1,5 @@
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
-import compression from 'compression';
-import rateLimit from 'express-rate-limit';
+// Load environment variables FIRST - before any other imports
 import dotenv from 'dotenv';
-import { createServer } from 'http';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -12,13 +7,28 @@ import { dirname, join } from 'path';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Load environment variables FIRST - look in backend-api directory
+// Load environment variables from backend-api directory
 dotenv.config({ path: join(__dirname, '../.env') });
 
 // Load production environment if available
 if (process.env.NODE_ENV === 'production') {
   dotenv.config({ path: join(__dirname, '../.env.production'), override: false });
 }
+
+// Debug: Log environment loading
+console.log('🔧 Environment loaded:');
+console.log('   NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('   PORT:', process.env.PORT || 'not set');
+console.log('   SUPABASE_URL:', process.env.SUPABASE_URL ? 'set' : 'not set');
+console.log('   GOOGLE_AI_API_KEY:', process.env.GOOGLE_AI_API_KEY ? 'set' : 'not set');
+
+// Now import everything else after environment variables are loaded
+import express from 'express';
+import cors from 'cors';
+import helmet from 'helmet';
+import compression from 'compression';
+import rateLimit from 'express-rate-limit';
+import { createServer } from 'http';
 
 // Import routes
 import documentsRouter from './routes/documents.js';
