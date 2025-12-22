@@ -9,6 +9,11 @@ import { createServer } from 'http';
 // Load environment variables FIRST
 dotenv.config();
 
+// Load production environment if available
+if (process.env.NODE_ENV === 'production') {
+  dotenv.config({ path: '.env.production', override: false });
+}
+
 // Import routes
 import documentsRouter from './routes/documents.js';
 import uploadRouter from './routes/upload.js';
@@ -30,13 +35,20 @@ app.use(helmet({
 }));
 
 // CORS configuration
+const corsOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'http://localhost:4173',
+  process.env.FRONTEND_URL
+].filter(Boolean);
+
+// Add wildcard for development
+if (process.env.NODE_ENV === 'development') {
+  corsOrigins.push(/localhost:\d+$/);
+}
+
 app.use(cors({
-  origin: [
-    'http://localhost:3000',
-    'http://localhost:5173',
-    'https://your-frontend.vercel.app',
-    process.env.FRONTEND_URL
-  ].filter(Boolean),
+  origin: corsOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']

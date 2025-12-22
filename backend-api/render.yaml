@@ -3,8 +3,8 @@ services:
     name: kmrl-backend-api
     env: node
     plan: starter
-    buildCommand: npm ci --only=production
-    startCommand: npm start
+    buildCommand: npm run render:build
+    startCommand: npm run render:start
     healthCheckPath: /health
     envVars:
       - key: NODE_ENV
@@ -29,3 +29,11 @@ services:
         value: pdf,doc,docx,txt,csv,xlsx
       - key: LOG_LEVEL
         value: info
+      - key: CHUNK_SIZE
+        value: 1000
+      - key: CHUNK_OVERLAP
+        value: 200
+      - key: RATE_LIMIT_WINDOW_MS
+        value: 900000
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: 1000
