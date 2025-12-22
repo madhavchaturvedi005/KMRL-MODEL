@@ -104,8 +104,6 @@ Once you have the credentials working locally:
 ```bash
 # Test if Supabase credentials work
 curl -H "Authorization: Bearer YOUR_SERVICE_ROLE_KEY" \
-     -H "apikey: YOUR_SERVICE_ROLE_KEY" \
-     "https://jleufzctebtcpdqlzckf.supabase.co/rest/v1/documents?select=count"
 ```
 
 ### **Google AI Test**
